@@ -128,9 +128,9 @@ function useInstance(instance) {
   )
 
   if (expandRowsInitially) {
-    Object.keys(rowsById).forEach( id => {
-      if (!(id in expanded)){
-          expanded[id] = true
+    Object.keys(rowsById).forEach(id => {
+      if (!(id in expanded)) {
+        expanded[id] = true
       }
     })
   }
