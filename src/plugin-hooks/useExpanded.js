@@ -73,45 +73,31 @@ function reducer(state, action, previousState, instance) {
 
     const expandAll = typeof value !== 'undefined' ? value : !isAllRowsExpanded
 
-    if (expandAll) {
-      const expanded = {}
+    const expanded = {}
 
-      Object.keys(rowsById).forEach(rowId => {
-        expanded[rowId] = true
-      })
-
-      return {
-        ...state,
-        expanded,
-      }
-    }
+    Object.keys(rowsById).forEach(rowId => {
+      expanded[rowId] = expandAll
+    })
 
     return {
       ...state,
-      expanded: {},
+      expanded,
     }
   }
 
   if (action.type === actions.toggleRowExpanded) {
     const { id, value: setExpanded } = action
-    const exists = state.expanded[id]
+    const isExpanded = state.expanded[id] === true
+    const shouldExpand =
+      typeof setExpanded !== 'undefined' ? setExpanded : !isExpanded
 
-    const shouldExist =
-      typeof setExpanded !== 'undefined' ? setExpanded : !exists
-
-    if (!exists && shouldExist) {
+    if (shouldExpand !== isExpanded) {
       return {
         ...state,
         expanded: {
           ...state.expanded,
-          [id]: true,
+          [id]: shouldExpand,
         },
-      }
-    } else if (exists && !shouldExist) {
-      const { [id]: _, ...rest } = state.expanded
-      return {
-        ...state,
-        expanded: rest,
       }
     } else {
       return state
@@ -128,6 +114,7 @@ function useInstance(instance) {
     paginateExpandedRows = true,
     expandSubRows = true,
     autoResetExpanded = true,
+    expandRowsInitially = false,
     getHooks,
     plugins,
     state: { expanded },
@@ -139,6 +126,14 @@ function useInstance(instance) {
     ['useSortBy', 'useGroupBy', 'usePivotColumns', 'useGlobalFilter'],
     'useExpanded'
   )
+
+  if (expandRowsInitially) {
+    Object.keys(rowsById).forEach( id => {
+      if (!(id in expanded)){
+          expanded[id] = true
+      }
+    })
+  }
 
   const getAutoResetExpanded = useGetLatest(autoResetExpanded)
 
