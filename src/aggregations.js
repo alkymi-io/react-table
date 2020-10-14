@@ -8,7 +8,7 @@ export function sum(values, aggregatedValues) {
 }
 
 export function min(values) {
-  let min = 0
+  let min = values[0] || 0
 
   values.forEach(value => {
     if (typeof value === 'number') {
@@ -20,7 +20,7 @@ export function min(values) {
 }
 
 export function max(values) {
-  let max = 0
+  let max = values[0] || 0
 
   values.forEach(value => {
     if (typeof value === 'number') {
@@ -32,8 +32,8 @@ export function max(values) {
 }
 
 export function minMax(values) {
-  let min = 0
-  let max = 0
+  let min = values[0] || 0
+  let max = values[0] || 0
 
   values.forEach(value => {
     if (typeof value === 'number') {
@@ -54,21 +54,13 @@ export function median(values) {
     return null
   }
 
-  let min = 0
-  let max = 0
-
-  values.forEach(value => {
-    if (typeof value === 'number') {
-      min = Math.min(min, value)
-      max = Math.max(max, value)
-    }
-  })
-
-  return (min + max) / 2
+  const mid = Math.floor(values.length / 2)
+  const nums = [...values].sort((a, b) => a - b)
+  return values.length % 2 !== 0 ? nums[mid] : (nums[mid - 1] + nums[mid]) / 2
 }
 
 export function unique(values) {
-  return [...new Set(values).values()]
+  return Array.from(new Set(values).values())
 }
 
 export function uniqueCount(values) {

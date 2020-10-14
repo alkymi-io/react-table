@@ -17,6 +17,7 @@ const emptyObject = {}
 
 // Actions
 actions.resetGroupBy = 'resetGroupBy'
+actions.setGroupBy = 'setGroupBy'
 actions.toggleGroupBy = 'toggleGroupBy'
 
 export const useGroupBy = hooks => {
@@ -62,6 +63,14 @@ function reducer(state, action, previousState, instance) {
     return {
       ...state,
       groupBy: instance.initialState.groupBy || [],
+    }
+  }
+
+  if (action.type === actions.setGroupBy) {
+    const { value } = action
+    return {
+      ...state,
+      groupBy: value,
     }
   }
 
@@ -136,7 +145,7 @@ function useInstance(instance) {
     getHooks,
   } = instance
 
-  ensurePluginOrder(plugins, ['useFilters'], 'useGroupBy')
+  ensurePluginOrder(plugins, ['useColumnOrder', 'useFilters'], 'useGroupBy')
 
   const getInstance = useGetLatest(instance)
 
@@ -171,6 +180,13 @@ function useInstance(instance) {
   const toggleGroupBy = React.useCallback(
     (columnId, value) => {
       dispatch({ type: actions.toggleGroupBy, columnId, value })
+    },
+    [dispatch]
+  )
+
+  const setGroupBy = React.useCallback(
+    value => {
+      dispatch({ type: actions.setGroupBy, value })
     },
     [dispatch]
   )
@@ -222,32 +238,6 @@ function useInstance(instance) {
           return
         }
 
-        // Get the columnValues to aggregate
-        const groupedValues = groupedRows.map(row => row.values[column.id])
-
-        // Get the columnValues to aggregate
-        const leafValues = leafRows.map(row => {
-          let columnValue = row.values[column.id]
-
-          if (!depth && column.aggregatedValue) {
-            const aggregateValueFn =
-              typeof column.aggregateValue === 'function'
-                ? column.aggregateValue
-                : userAggregations[column.aggregateValue] ||
-                  aggregations[column.aggregateValue]
-
-            if (!aggregateValueFn) {
-              console.info({ column })
-              throw new Error(
-                `React Table: Invalid column.aggregateValue option for column listed above`
-              )
-            }
-
-            columnValue = aggregateValueFn(columnValue, row, column)
-          }
-          return columnValue
-        })
-
         // Aggregate the values
         let aggregateFn =
           typeof column.aggregate === 'function'
@@ -256,6 +246,32 @@ function useInstance(instance) {
               aggregations[column.aggregate]
 
         if (aggregateFn) {
+          // Get the columnValues to aggregate
+          const groupedValues = groupedRows.map(row => row.values[column.id])
+
+          // Get the columnValues to aggregate
+          const leafValues = leafRows.map(row => {
+            let columnValue = row.values[column.id]
+
+            if (!depth && column.aggregateValue) {
+              const aggregateValueFn =
+                typeof column.aggregateValue === 'function'
+                  ? column.aggregateValue
+                  : userAggregations[column.aggregateValue] ||
+                    aggregations[column.aggregateValue]
+
+              if (!aggregateValueFn) {
+                console.info({ column })
+                throw new Error(
+                  `React Table: Invalid column.aggregateValue option for column listed above`
+                )
+              }
+
+              columnValue = aggregateValueFn(columnValue, row, column)
+            }
+            return columnValue
+          })
+
           values[column.id] = aggregateFn(leafValues, groupedValues)
         } else if (column.aggregate) {
           console.info({ column })
@@ -394,6 +410,7 @@ function useInstance(instance) {
     flatRows: groupedFlatRows,
     rowsById: groupedRowsById,
     toggleGroupBy,
+    setGroupBy,
   })
 }
 
@@ -404,7 +421,8 @@ function prepareRow(row) {
     // Placeholder cells are any columns in the groupBy that are not grouped
     cell.isPlaceholder = !cell.isGrouped && cell.column.isGrouped
     // Aggregated cells are not grouped, not repeated, but still have subRows
-    cell.isAggregated = !cell.isGrouped && !cell.isPlaceholder && row.canExpand
+    cell.isAggregated =
+      !cell.isGrouped && !cell.isPlaceholder && row.subRows?.length
   })
 }
 

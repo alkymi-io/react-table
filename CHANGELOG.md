@@ -1,3 +1,28 @@
+# React Table Changelog
+
+## 7.0.5
+
+- Added semantic release support. So no more changelog entries here - see [Releases](https://github.com/tannerlinsley/react-table/releases) instead! See ya!
+
+## 7.0.4
+
+- Fixed a regression where @scarf/scarf was somehow removed from the package dependencies
+
+## 7.0.3
+
+- Fixed an issue where unnecessary documentation dependencies were added when installing the library
+- Fixed an issue where the `scripts` directory was not added to the npm package on build
+
+## 7.0.2
+
+- Fixed an issue where the internal flexRenderer would not work correctly in production due to the strangest friggin' minification bug I've ever encountered. 🤷‍♂️
+
+## 7.0.1
+
+- Added the `value` property to cell renderers so that destructurin the value from the `cell` property is now not necessary. This should help with people migrating from v6 and also just to cut down on noise in cell renderers
+- Fixed an issue where rollup would not build correctly
+- Fixed an issue where a page index of `-1` would result in an error
+
 ## 7.0.0 🎉
 
 - Fixed an issue where page options array could be empty
