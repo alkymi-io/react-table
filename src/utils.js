@@ -1,5 +1,4 @@
-import React from 'react'
-import { defaultColumn } from './publicUtils'
+import { defaultColumn, emptyRenderer } from './publicUtils'
 
 // Find the depth of the columns
 export function findMaxDepth(columns, depth = 0) {
@@ -71,17 +70,26 @@ export function decorateColumn(column, userDefaultColumn) {
   }
   Object.assign(column, {
     // Make sure there is a fallback header, just in case
-    Header: () => <>&nbsp;</>,
-    Footer: () => <>&nbsp;</>,
+    Header: emptyRenderer,
+    Footer: emptyRenderer,
     ...defaultColumn,
     ...userDefaultColumn,
     ...column,
   })
+
+  Object.assign(column, {
+    originalWidth: column.width,
+  })
+
   return column
 }
 
 // Build the header groups from the bottom up
-export function makeHeaderGroups(allColumns, defaultColumn) {
+export function makeHeaderGroups(
+  allColumns,
+  defaultColumn,
+  additionalHeaderProperties = () => ({})
+) {
   const headerGroups = []
 
   let scanColumns = allColumns
@@ -115,6 +123,7 @@ export function makeHeaderGroups(allColumns, defaultColumn) {
             originalId: column.parent.id,
             id: `${column.parent.id}_${getUID()}`,
             headers: [column],
+            ...additionalHeaderProperties(column),
           }
         } else {
           // If other columns have parents, we'll need to add a place holder if necessary
@@ -125,6 +134,7 @@ export function makeHeaderGroups(allColumns, defaultColumn) {
               id: `${column.id}_placeholder_${getUID()}`,
               placeholderOf: column,
               headers: [column],
+              ...additionalHeaderProperties(column),
             },
             defaultColumn
           )
@@ -243,20 +253,22 @@ export function expandRows(
 ) {
   const expandedRows = []
 
-  const handleRow = row => {
+  const handleRow = (row, addToExpandedRows = true) => {
     row.isExpanded =
       (row.original && row.original[manualExpandedKey]) || expanded[row.id]
 
     row.canExpand = row.subRows && !!row.subRows.length
 
-    expandedRows.push(row)
+    if (addToExpandedRows) {
+      expandedRows.push(row)
+    }
 
-    if (expandSubRows && row.subRows && row.subRows.length && row.isExpanded) {
-      row.subRows.forEach(handleRow)
+    if (row.subRows && row.subRows.length && row.isExpanded) {
+      row.subRows.forEach(row => handleRow(row, expandSubRows))
     }
   }
 
-  rows.forEach(handleRow)
+  rows.forEach(row => handleRow(row))
 
   return expandedRows
 }
@@ -278,6 +290,29 @@ export function unpreparedAccessWarning() {
   throw new Error(
     'React-Table: You have not called prepareRow(row) one or more rows you are attempting to render.'
   )
+}
+
+let passiveSupported = null
+export function passiveEventSupported() {
+  // memoize support to avoid adding multiple test events
+  if (typeof passiveSupported === 'boolean') return passiveSupported
+
+  let supported = false
+  try {
+    const options = {
+      get passive() {
+        supported = true
+        return false
+      },
+    }
+
+    window.addEventListener('test', null, options)
+    window.removeEventListener('test', null, options)
+  } catch (err) {
+    supported = false
+  }
+  passiveSupported = supported
+  return passiveSupported
 }
 
 //

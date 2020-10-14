@@ -43,12 +43,25 @@ function reducer(state, action, previousState, instance) {
   }
 
   if (action.type === actions.gotoPage) {
-    const { pageCount } = instance
+    const { pageCount, page } = instance
     const newPageIndex = functionalUpdate(action.pageIndex, state.pageIndex)
+    let canNavigate = false
 
-    if (newPageIndex < 0 || newPageIndex > pageCount - 1) {
+    if (newPageIndex > state.pageIndex) {
+      // next page
+      canNavigate =
+        pageCount === -1
+          ? page.length >= state.pageSize
+          : newPageIndex <= pageCount
+    } else if (newPageIndex < state.pageIndex) {
+      // prev page
+      canNavigate = newPageIndex > -1
+    }
+
+    if (!canNavigate) {
       return state
     }
+
     return {
       ...state,
       pageIndex: newPageIndex,
@@ -153,7 +166,8 @@ function useInstance(instance) {
   ])
 
   const canPreviousPage = pageIndex > 0
-  const canNextPage = pageCount === -1 || pageIndex < pageCount - 1
+  const canNextPage =
+    pageCount === -1 ? page.length >= pageSize : pageIndex < pageCount - 1
 
   const gotoPage = React.useCallback(
     pageIndex => {
